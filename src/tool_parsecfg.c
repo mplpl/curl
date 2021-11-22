@@ -128,6 +128,7 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
     struct curlx_dynbuf buf;
     bool fileerror;
     curlx_dyn_init(&buf, MAX_CONFIG_LINE_LENGTH);
+    DEBUGASSERT(filename);
 
     while(my_get_line(file, &buf, &fileerror)) {
       int res;
