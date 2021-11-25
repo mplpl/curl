@@ -106,6 +106,10 @@ char *findfile(const char *fname, bool dotscore)
         c2 = home;
       if(c2) {
         char *path = checkhome(c2, fname, dotscore);
+#if 1
+        fprintf(stderr, "%s:%d %s/%s returns %s\n", __FILE__, __LINE__,
+                c2, fname, path);
+#endif
         if(c2alloc)
           free(c2);
         curl_free(home);
