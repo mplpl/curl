@@ -290,7 +290,7 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
     rc = 1; /* couldn't open the file */
 
 #if 1
-  fprintf(stderr, "%s:%d %s returns %u\n", __FILE__, __LINE__, rc);
+  fprintf(stderr, "%s:%d returns %u\n", __FILE__, __LINE__, rc);
 #endif
   curl_free(pathalloc);
   return rc;
