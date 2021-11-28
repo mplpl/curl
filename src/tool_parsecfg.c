@@ -66,10 +66,6 @@ static FILE *execpath(const char *filename, char **pathp)
         msnprintf(lastdirchar, remaining, "%s%s", DIR_CHAR, filename);
         *pathp = filebuffer;
         f = fopen(filebuffer, FOPEN_READTEXT);
-#if 1
-        fprintf(stderr, "%s:%d %s returns %p\n", __FILE__, __LINE__,
-                filebuffer, f);
-#endif
         return f;
       }
     }
@@ -289,9 +285,6 @@ int parseconfig(const char *filename, struct GlobalConfig *global)
   else
     rc = 1; /* couldn't open the file */
 
-#if 1
-  fprintf(stderr, "%s:%d returns %u\n", __FILE__, __LINE__, rc);
-#endif
   curl_free(pathalloc);
   return rc;
 }

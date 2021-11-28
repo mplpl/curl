@@ -51,7 +51,7 @@ static const struct finder list[] = {
 #ifdef WIN32
   { "USERPROFILE", NULL },
   { "APPDATA", NULL },
-  { "USERPROFILE", "\\Application Data\\"},
+  { "USERPROFILE", "\\Application Data"},
 #endif
   { NULL, NULL }
 };
@@ -61,12 +61,18 @@ static char *checkhome(const char *home, const char *fname, bool dotscore)
   const char pref[2] = { '.', '_' };
   int i;
   for(i = 0; i < (dotscore ? 2 : 1); i++) {
-    char *c = curl_maprintf("%s" DIR_CHAR "%c%s", home, pref[i], &fname[1]);
+    char *c;
+    if(dotscore)
+      c = curl_maprintf("%s" DIR_CHAR "%c%s", home, pref[i], &fname[1]);
+    else
+      c = curl_maprintf("%s" DIR_CHAR "%s", home, fname);
     if(c) {
       int fd = open(c, O_RDONLY);
       if(fd >= 0) {
+        char *path = strdup(c);
         close(fd);
-        return c; /* fine! */
+        curl_free(c);
+        return path;
       }
       curl_free(c);
     }
@@ -75,8 +81,7 @@ static char *checkhome(const char *home, const char *fname, bool dotscore)
 }
 
 /*
- * findfile() - return the full path name of the file as an curl-allocated
- * string that needs curl_free().
+ * findfile() - return the full path name of the file.
  *
  * If 'dotscore' is TRUE, then check for the file first with a leading dot
  * and then with a leading underscore.
@@ -85,51 +90,45 @@ static char *checkhome(const char *home, const char *fname, bool dotscore)
  *    the given file to be accessed there, then it is a match.
  * 2. Non-windows: try getpwuid
  */
-
 char *findfile(const char *fname, bool dotscore)
 {
-  char *home = NULL;
   int i;
-  DEBUGASSERT(fname);
+  DEBUGASSERT(fname && fname[0]);
   DEBUGASSERT(!dotscore || (fname[0] == '.'));
 
+  if(!fname[0])
+    return NULL;
+
   for(i = 0; list[i].env; i++) {
-    home = curl_getenv(list[i].env);
+    char *home = curl_getenv(list[i].env);
     if(home) {
-      char *c2;
-      bool c2alloc = FALSE;
+      char *path;
+      if(!home[0]) {
+        curl_free(home);
+        continue;
+      }
       if(list[i].append) {
-        c2 = curl_maprintf("%s%s", home, list[i].append);
-        c2alloc = TRUE;
-      }
-      else
-        c2 = home;
-      if(c2) {
-        char *path = checkhome(c2, fname, dotscore);
-#if 1
-        fprintf(stderr, "%s:%d %s/%s returns %s\n", __FILE__, __LINE__,
-                c2, fname, path);
-#endif
-        if(c2alloc)
-          free(c2);
+        char *c = curl_maprintf("%s%s", home, list[i].append);
         curl_free(home);
-        if(path)
-          return path;
+        if(!c)
+          return NULL;
+        home = c;
       }
-      else
-        curl_free(home);
+      path = checkhome(home, fname, dotscore);
+      curl_free(home);
+      if(path)
+        return path;
     }
   }
 #if defined(HAVE_GETPWUID) && defined(HAVE_GETEUID)
   {
     struct passwd *pw = getpwuid(geteuid());
     if(pw) {
-      home = pw->pw_dir;
+      char *home = pw->pw_dir;
       if(home && home[0])
         return checkhome(home, fname, FALSE);
-      home = NULL;
     }
   }
 #endif /* PWD-stuff */
-  return home;
+  return NULL;
 }
