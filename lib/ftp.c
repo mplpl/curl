@@ -777,6 +777,18 @@ static void _state(struct Curl_easy *data,
   ftpc->state = newstate;
 }
 
+static CURLcode ftp_state_opts_utf8(struct Curl_easy *data,
+                                    struct connectdata *conn)
+{
+  CURLcode result = Curl_pp_sendf(data,
+                                  &conn->proto.ftpc.pp, "%s",
+                                  "OPTS UTF8 ON");
+  if(!result) {
+    state(data, FTP_OPTS_UTF8);
+  }
+  return result;
+}
+
 static CURLcode ftp_state_user(struct Curl_easy *data,
                                struct connectdata *conn)
 {
@@ -2733,9 +2745,18 @@ static CURLcode ftp_statemachine(struct Curl_easy *data,
         if(!result)
           state(data, FTP_AUTH);
       }
-      else
-        result = ftp_state_user(data, conn);
+      else {
+        if (data->set.ftp_opts_utf8) {
+          result = ftp_state_opts_utf8(data, conn);
+        } else {
+          result = ftp_state_user(data, conn);
+        }
+      }
       break;
+
+    case FTP_OPTS_UTF8:
+        result = ftp_state_user(data, conn);
+        break;
 
     case FTP_AUTH:
       /* we have gotten the response to a previous AUTH command */
@@ -2753,7 +2774,11 @@ static CURLcode ftp_statemachine(struct Curl_easy *data,
         if(!result) {
           conn->bits.ftp_use_data_ssl = FALSE; /* clear-text data */
           conn->bits.ftp_use_control_ssl = TRUE; /* SSL on control */
-          result = ftp_state_user(data, conn);
+          if (data->set.ftp_opts_utf8) {
+            result = ftp_state_opts_utf8(data, conn);
+          } else {
+            result = ftp_state_user(data, conn);
+          }
         }
       }
       else if(ftpc->count3 < 1) {
@@ -2769,7 +2794,11 @@ static CURLcode ftp_statemachine(struct Curl_easy *data,
           result = CURLE_USE_SSL_FAILED;
         else
           /* ignore the failure and continue */
-          result = ftp_state_user(data, conn);
+          if (data->set.ftp_opts_utf8) {
+            result = ftp_state_opts_utf8(data, conn);
+          } else {
+            result = ftp_state_user(data, conn);
+          }
       }
       break;
 

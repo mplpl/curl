@@ -2105,6 +2105,9 @@ typedef enum {
      this option is used only if PROXY_SSL_VERIFYPEER is true */
   CURLOPT(CURLOPT_PROXY_CAINFO_BLOB, CURLOPTTYPE_BLOB, 310),
 
+  /* Enable sending 'OPTS UTF8 ON' after establishing FTP/FTPS connection */
+  CURLOPT(CURLOPT_FTP_OPTS_UTF8, CURLOPTTYPE_LONG, 350),
+
   CURLOPT_LASTENTRY /* the last unused */
 } CURLoption;
 

@@ -75,6 +75,7 @@ typedef enum {
   FTP_RETR,
   FTP_STOR, /* generic state for STOR and APPE */
   FTP_QUIT,
+  FTP_OPTS_UTF8,
   FTP_LAST  /* never used */
 } ftpstate;
 

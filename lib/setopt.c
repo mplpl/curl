@@ -1236,6 +1236,10 @@ CURLcode Curl_vsetopt(struct Curl_easy *data, CURLoption option, va_list param)
     data->set.ftp_skip_ip = (0 != va_arg(param, long)) ? TRUE : FALSE;
     break;
 
+  case CURLOPT_FTP_OPTS_UTF8:
+    data->set.ftp_opts_utf8 = (0 != va_arg(param, long)) ? TRUE : FALSE;
+    break;
+
   case CURLOPT_FTP_ACCOUNT:
     result = Curl_setstropt(&data->set.str[STRING_FTP_ACCOUNT],
                             va_arg(param, char *));

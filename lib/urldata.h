@@ -1803,6 +1803,8 @@ struct UserDefined {
   BIT(ftp_use_pret);     /* if PRET is to be used before PASV or not */
   BIT(ftp_skip_ip);      /* skip the IP address the FTP server passes on to
                             us */
+  BIT(ftp_opts_utf8);    /* sends OPTS UTF8 ON after establishing connection
+                            to the FTP/FTPS server */
 #endif
   BIT(hide_progress);    /* don't use the progress meter */
   BIT(http_fail_on_error);  /* fail on HTTP error codes >= 400 */
