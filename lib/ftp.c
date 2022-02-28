@@ -778,13 +778,14 @@ static void _state(struct Curl_easy *data,
 }
 
 static CURLcode ftp_state_opts_utf8(struct Curl_easy *data,
-                                    struct connectdata *conn)
+                                    struct connectdata *conn,
+                                    int pre)
 {
   CURLcode result = Curl_pp_sendf(data,
                                   &conn->proto.ftpc.pp, "%s",
                                   "OPTS UTF8 ON");
   if(!result) {
-    state(data, FTP_OPTS_UTF8);
+    state(data, (pre>0) ? FTP_OPTS_UTF8_PRE : FTP_OPTS_UTF8);
   }
   return result;
 }
@@ -2589,7 +2590,11 @@ static CURLcode ftp_state_loggedin(struct Curl_easy *data)
       state(data, FTP_PBSZ);
   }
   else {
-    result = ftp_state_pwd(data, conn);
+    if (data->set.ftp_opts_utf8) {
+      result = ftp_state_opts_utf8(data, conn, 0);
+    } else {
+      result = ftp_state_pwd(data, conn);
+    }
   }
   return result;
 }
@@ -2747,15 +2752,19 @@ static CURLcode ftp_statemachine(struct Curl_easy *data,
       }
       else {
         if (data->set.ftp_opts_utf8) {
-          result = ftp_state_opts_utf8(data, conn);
+          result = ftp_state_opts_utf8(data, conn, 1);
         } else {
           result = ftp_state_user(data, conn);
         }
       }
       break;
 
-    case FTP_OPTS_UTF8:
+    case FTP_OPTS_UTF8_PRE:
         result = ftp_state_user(data, conn);
+        break;
+
+    case FTP_OPTS_UTF8:
+        result = ftp_state_pwd(data, conn);
         break;
 
     case FTP_AUTH:
@@ -2775,7 +2784,7 @@ static CURLcode ftp_statemachine(struct Curl_easy *data,
           conn->bits.ftp_use_data_ssl = FALSE; /* clear-text data */
           conn->bits.ftp_use_control_ssl = TRUE; /* SSL on control */
           if (data->set.ftp_opts_utf8) {
-            result = ftp_state_opts_utf8(data, conn);
+            result = ftp_state_opts_utf8(data, conn, 1);
           } else {
             result = ftp_state_user(data, conn);
           }
@@ -2795,7 +2804,7 @@ static CURLcode ftp_statemachine(struct Curl_easy *data,
         else
           /* ignore the failure and continue */
           if (data->set.ftp_opts_utf8) {
-            result = ftp_state_opts_utf8(data, conn);
+            result = ftp_state_opts_utf8(data, conn, 1);
           } else {
             result = ftp_state_user(data, conn);
           }
